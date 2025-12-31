@@ -27,36 +27,39 @@ This document explains the CI/CD workflows for the GitMesh VS Code extension.
 ### 2. Release Extension (`release.yml`)
 
 **Triggers:**
-- When a GitHub release is created
+- Push of a tag starting with `v*` (e.g., `v0.1.0`)
 - Manual trigger via GitHub Actions UI
 
 **What it does:**
 - Compiles and packages the extension
-- Uploads the VSIX to the GitHub release assets
+- **Automatically creates a GitHub Release** based on the tag
+- Uploads the VSIX to the release assets
+- Generates release notes automatically
 - Stores VSIX as artifact (90-day retention)
 
 ## Creating a Release
 
-### Option 1: GitHub UI
+The release process is now fully automated via git tags.
 
-1. Go to your repository → Releases → "Draft a new release"
-2. Create a new tag (e.g., `v0.1.0`)
-3. Fill in release title and description
-4. Click "Publish release"
-5. The workflow will automatically:
-   - Build the extension
-   - Upload VSIX to the release
-
-### Option 2: Command Line
+### Step 1: Update Version
+Update the version in `package.json` and create a tag:
 
 ```bash
-# Create and push a tag
-git tag v0.1.0
-git push origin v0.1.0
+# Updates version to 0.1.1 and creates a git tag 'v0.1.1'
+npm version patch
 
-# Create release using GitHub CLI
-gh release create v0.1.0 --title "v0.1.0" --notes "Release notes here"
+# OR specific version
+npm version 0.2.0
 ```
+
+### Step 2: Push changes and tags
+Pushing the tag triggers the release workflow:
+
+```bash
+git push && git push --tags
+```
+
+**That's it!** The workflow will run, create a "Release v0.1.1" on GitHub, and attach the `.vsix` file.
 
 ## Manual Packaging
 
