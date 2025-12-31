@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
-import { GitResult } from './types';
+import { GitResult, CommitInfo } from './types';
 
 export class GitRunner {
-  constructor(private readonly outputChannel: vscode.OutputChannel) {}
+  constructor(private readonly outputChannel: vscode.OutputChannel) { }
 
   async runGit(
     repoPath: string,
@@ -80,6 +80,43 @@ export class GitRunner {
     });
   }
 
+  async getGitLog(repoPath: string, count: number = 20): Promise<CommitInfo[]> {
+    const DELIMITER = '|||';
+    const format = `%H${DELIMITER}%h${DELIMITER}%s${DELIMITER}%an${DELIMITER}%ar${DELIMITER}%D`;
+
+    const result = await this.runGit(repoPath, [
+      'log',
+      `--format=${format}`,
+      `-n`,
+      count.toString()
+    ]);
+
+    if (result.exitCode !== 0) {
+      this.outputChannel.appendLine(`[GitRunner] Failed to get git log: ${result.stderr}`);
+      return [];
+    }
+
+    const commits: CommitInfo[] = [];
+    const lines = result.stdout.split('\n').filter(line => line.trim());
+
+    for (const line of lines) {
+      const parts = line.split(DELIMITER);
+      if (parts.length >= 5) {
+        const refs = parts[5] ? parts[5].split(', ').filter(r => r.trim()) : [];
+        commits.push({
+          hash: parts[0],
+          shortHash: parts[1],
+          message: parts[2],
+          author: parts[3],
+          relativeDate: parts[4],
+          refs
+        });
+      }
+    }
+
+    return commits;
+  }
+
   private sanitizeArgs(args: string[]): string[] {
     return args.map(arg => {
       if (arg.includes('token') || arg.includes('password') || arg.includes('key')) {
@@ -89,3 +126,4 @@ export class GitRunner {
     });
   }
 }
+

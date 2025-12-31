@@ -11,6 +11,20 @@ export interface RepoStatus {
   lastUpdated: number;
 }
 
+export interface CommitInfo {
+  hash: string;
+  shortHash: string;
+  message: string;
+  author: string;
+  relativeDate: string;
+  refs: string[];
+}
+
+export interface GitTreeData {
+  repoPath: string;
+  commits: CommitInfo[];
+}
+
 export interface GitResult {
   exitCode: number;
   stdout: string;
@@ -36,12 +50,18 @@ export interface BulkOperationRequest {
   };
 }
 
+export interface GitTreeRequest {
+  repoPath: string;
+  count?: number;
+}
+
 export interface MessageToWebview {
-  type: 'repoStatusUpdate' | 'operationProgress' | 'operationComplete' | 'logMessage';
+  type: 'repoStatusUpdate' | 'operationProgress' | 'operationComplete' | 'logMessage' | 'gitTreeUpdate';
   data: any;
 }
 
 export interface MessageFromWebview {
-  type: 'fetchRepos' | 'bulkFetch' | 'bulkCheckout' | 'bulkPush' | 'bulkReset' | 'refreshStatus';
+  type: 'fetchRepos' | 'bulkFetch' | 'bulkCheckout' | 'bulkPush' | 'bulkReset' | 'refreshStatus' | 'fetchGitTree';
   data?: any;
 }
+

@@ -1,16 +1,33 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useWebviewMessages } from './hooks/useWebviewMessages';
-import { RepoStatus, MessageToWebview } from './types';
+import { RepoStatus, CommitInfo, MessageToWebview } from './types';
+import { RepositoryCard } from './components/RepositoryCard';
+import { RefreshIcon } from './components/Icons';
 import './App.css';
 
 export const App: React.FC = () => {
   const [repos, setRepos] = useState<RepoStatus[]>([]);
   const [selectedRepos, setSelectedRepos] = useState<Set<string>>(new Set());
+  const [expandedRepos, setExpandedRepos] = useState<Set<string>>(new Set());
+  const [gitTrees, setGitTrees] = useState<Map<string, CommitInfo[]>>(new Map());
+  const [loadingTrees, setLoadingTrees] = useState<Set<string>>(new Set());
 
   const handleMessage = useCallback((message: MessageToWebview) => {
     switch (message.type) {
       case 'repoStatusUpdate':
         setRepos(message.data.repos || []);
+        break;
+      case 'gitTreeUpdate':
+        setGitTrees(prev => {
+          const next = new Map(prev);
+          next.set(message.data.repoPath, message.data.commits);
+          return next;
+        });
+        setLoadingTrees(prev => {
+          const next = new Set(prev);
+          next.delete(message.data.repoPath);
+          return next;
+        });
         break;
       case 'operationProgress':
         console.log('Operation progress:', message.data);
@@ -37,6 +54,30 @@ export const App: React.FC = () => {
         next.delete(repoPath);
       } else {
         next.add(repoPath);
+      }
+      return next;
+    });
+  };
+
+  const toggleRepoExpand = (repoPath: string) => {
+    setExpandedRepos(prev => {
+      const next = new Set(prev);
+      if (next.has(repoPath)) {
+        next.delete(repoPath);
+      } else {
+        next.add(repoPath);
+        // Fetch git tree if not already loaded
+        if (!gitTrees.has(repoPath) && !loadingTrees.has(repoPath)) {
+          setLoadingTrees(loading => {
+            const nextLoading = new Set(loading);
+            nextLoading.add(repoPath);
+            return nextLoading;
+          });
+          postMessage({
+            type: 'fetchGitTree',
+            data: { repoPath, count: 15 }
+          });
+        }
       }
       return next;
     });
@@ -93,46 +134,39 @@ export const App: React.FC = () => {
   return (
     <div className="app">
       <header className="header">
-        <h1>GitMesh Dashboard</h1>
-        <button onClick={() => postMessage({ type: 'refreshStatus' })}>
-          Refresh
+        <div className="header-left">
+          <h1>GitMesh</h1>
+          <span className="repo-count">{repos.length} repositories</span>
+        </div>
+        <button className="icon-button" onClick={() => postMessage({ type: 'refreshStatus' })} title="Refresh">
+          <RefreshIcon />
         </button>
       </header>
 
-      <div className="actions">
-        <div className="action-group">
-          <button onClick={selectAll} disabled={repos.length === 0}>
+      <div className="action-bar">
+        <div className="selection-controls">
+          <button className="secondary" onClick={selectAll} disabled={repos.length === 0}>
             Select All
           </button>
-          <button onClick={deselectAll} disabled={selectedRepos.size === 0}>
-            Deselect All
+          <button className="secondary" onClick={deselectAll} disabled={selectedRepos.size === 0}>
+            Clear
           </button>
+          {selectedRepos.size > 0 && (
+            <span className="selection-count">{selectedRepos.size} selected</span>
+          )}
         </div>
-        <div className="action-group">
-          <button
-            onClick={handleBulkFetch}
-            disabled={selectedRepos.size === 0}
-          >
-            Fetch ({selectedRepos.size})
+        <div className="bulk-actions">
+          <button onClick={handleBulkFetch} disabled={selectedRepos.size === 0}>
+            Fetch
           </button>
-          <button
-            onClick={handleBulkCheckout}
-            disabled={selectedRepos.size === 0}
-          >
-            Checkout ({selectedRepos.size})
+          <button onClick={handleBulkCheckout} disabled={selectedRepos.size === 0}>
+            Checkout
           </button>
-          <button
-            onClick={handleBulkPush}
-            disabled={selectedRepos.size === 0}
-          >
-            Push ({selectedRepos.size})
+          <button onClick={handleBulkPush} disabled={selectedRepos.size === 0}>
+            Push
           </button>
-          <button
-            onClick={handleBulkReset}
-            disabled={selectedRepos.size === 0}
-            className="danger"
-          >
-            Reset ({selectedRepos.size})
+          <button className="danger" onClick={handleBulkReset} disabled={selectedRepos.size === 0}>
+            Reset
           </button>
         </div>
       </div>
@@ -140,45 +174,23 @@ export const App: React.FC = () => {
       <div className="repo-list">
         {repos.length === 0 ? (
           <div className="empty-state">
-            <p>No Git repositories found in workspace</p>
-            <p className="hint">Open a folder containing Git repositories to get started</p>
+            <div className="empty-icon">📁</div>
+            <h2>No repositories found</h2>
+            <p>Open a folder containing Git repositories to get started</p>
           </div>
         ) : (
-          <table className="repo-table">
-            <thead>
-              <tr>
-                <th></th>
-                <th>Repository</th>
-                <th>Branch</th>
-                <th>Status</th>
-                <th>Ahead/Behind</th>
-              </tr>
-            </thead>
-            <tbody>
-              {repos.map(repo => (
-                <tr key={repo.path}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={selectedRepos.has(repo.path)}
-                      onChange={() => toggleRepoSelection(repo.path)}
-                    />
-                  </td>
-                  <td className="repo-name">{repo.name}</td>
-                  <td>{repo.branch}</td>
-                  <td>
-                    {repo.isDirty && <span className="badge dirty">Dirty</span>}
-                    {repo.hasUntracked && <span className="badge untracked">Untracked</span>}
-                    {!repo.isDirty && !repo.hasUntracked && <span className="badge clean">Clean</span>}
-                  </td>
-                  <td>
-                    {repo.ahead > 0 && <span className="ahead">↑{repo.ahead}</span>}
-                    {repo.behind > 0 && <span className="behind">↓{repo.behind}</span>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          repos.map(repo => (
+            <RepositoryCard
+              key={repo.path}
+              repo={repo}
+              isSelected={selectedRepos.has(repo.path)}
+              isExpanded={expandedRepos.has(repo.path)}
+              commits={gitTrees.get(repo.path) || []}
+              isLoadingTree={loadingTrees.has(repo.path)}
+              onToggleSelect={() => toggleRepoSelection(repo.path)}
+              onToggleExpand={() => toggleRepoExpand(repo.path)}
+            />
+          ))
         )}
       </div>
     </div>

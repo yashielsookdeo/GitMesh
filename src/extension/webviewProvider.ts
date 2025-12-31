@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MessageFromWebview, MessageToWebview, RepoStatus, BulkOperationRequest, OperationProgress } from './types';
+import { MessageFromWebview, MessageToWebview, RepoStatus, BulkOperationRequest, OperationProgress, GitTreeRequest } from './types';
 import { GitRunner } from './gitRunner';
 import { RepoDiscovery } from './repoDiscovery';
 import { StatusPoller } from './statusPoller';
@@ -101,7 +101,22 @@ export class GitMeshWebviewProvider {
       case 'bulkReset':
         await this.handleBulkReset(message.data as BulkOperationRequest);
         break;
+      case 'fetchGitTree':
+        await this.handleFetchGitTree(message.data as GitTreeRequest);
+        break;
     }
+  }
+
+  private async handleFetchGitTree(request: GitTreeRequest) {
+    this.outputChannel.appendLine(`[WebviewProvider] Fetching git tree for ${request.repoPath}`);
+    const commits = await this.gitRunner.getGitLog(request.repoPath, request.count || 20);
+    this.postMessage({
+      type: 'gitTreeUpdate',
+      data: {
+        repoPath: request.repoPath,
+        commits
+      }
+    });
   }
 
   private async handleBulkOperation(request: BulkOperationRequest) {
@@ -131,7 +146,7 @@ export class GitMeshWebviewProvider {
     }
 
     request.options = { ...request.options, branch };
-    
+
     try {
       await this.bulkOperations.executeBulkCheckout(request);
     } catch (error) {
@@ -224,7 +239,7 @@ export class GitMeshWebviewProvider {
       type: 'operationComplete',
       data: {}
     });
-    
+
     this.refreshStatus();
   }
 
