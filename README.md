@@ -131,6 +131,30 @@ Contributions are welcome! Please ensure:
 - All operations preserve GPG compatibility
 - Dangerous operations have appropriate safety gates
 
+## Releasing
+
+To create a new release:
+
+1. **Update Version & Tag**:
+   ```bash
+   # Increment patch version (e.g., 0.1.0 -> 0.1.1)
+   npm version patch
+   
+   # Or minor/major
+   npm version minor
+   ```
+   This command automatically updates `package.json` and creates a local git tag (e.g., `v0.1.1`).
+
+2. **Push to GitHub**:
+   ```bash
+   git push && git push --tags
+   ```
+
+3. **Done!** GitHub Actions will automatically:
+   - Build the extension
+   - Create a GitHub Release
+   - Upload the `.vsix` file to the release assets
+
 ## License
 
 MIT
