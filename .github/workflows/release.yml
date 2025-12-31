@@ -50,7 +50,7 @@ jobs:
         asset_content_type: application/zip
     
     - name: Publish to VS Code Marketplace
-      if: (github.event_name == 'release' || inputs.publish == true) && secrets.VSCE_PAT != ''
+      if: github.event_name == 'release' || inputs.publish == true
       run: npx vsce publish -p ${{ secrets.VSCE_PAT }}
       env:
         VSCE_PAT: ${{ secrets.VSCE_PAT }}
