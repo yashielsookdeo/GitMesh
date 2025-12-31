@@ -28,51 +28,12 @@ This document explains the CI/CD workflows for the GitMesh VS Code extension.
 
 **Triggers:**
 - When a GitHub release is created
-- Manual trigger via GitHub Actions UI (with optional marketplace publishing)
+- Manual trigger via GitHub Actions UI
 
 **What it does:**
 - Compiles and packages the extension
 - Uploads the VSIX to the GitHub release assets
-- Optionally publishes to VS Code Marketplace (if configured)
 - Stores VSIX as artifact (90-day retention)
-
-## Setting Up Marketplace Publishing
-
-To enable automatic publishing to the VS Code Marketplace:
-
-### Step 1: Create a Personal Access Token (PAT)
-
-1. Go to [Azure DevOps](https://dev.azure.com/)
-2. Click on your profile → Security → Personal Access Tokens
-3. Create a new token with:
-   - **Name**: `vsce-publish-gitmesh`
-   - **Organization**: All accessible organizations
-   - **Scopes**: Custom defined → Marketplace → **Manage**
-4. Copy the token (you won't see it again!)
-
-### Step 2: Add Token to GitHub Secrets
-
-1. Go to your GitHub repository
-2. Settings → Secrets and variables → Actions
-3. Click "New repository secret"
-4. **Name**: `VSCE_PAT`
-5. **Value**: Paste your Azure DevOps PAT
-6. Click "Add secret"
-
-### Step 3: Update package.json
-
-Ensure your `package.json` has a valid publisher name:
-
-```json
-{
-  "publisher": "your-publisher-id"
-}
-```
-
-To create a publisher:
-1. Go to [VS Code Marketplace Publisher Management](https://marketplace.visualstudio.com/manage)
-2. Create a new publisher
-3. Update the `publisher` field in `package.json`
 
 ## Creating a Release
 
@@ -85,7 +46,6 @@ To create a publisher:
 5. The workflow will automatically:
    - Build the extension
    - Upload VSIX to the release
-   - Publish to marketplace (if configured)
 
 ### Option 2: Command Line
 
@@ -138,12 +98,6 @@ code --install-extension gitmesh-0.1.0.vsix
 - Verify all required files are included (check `.vscodeignore`)
 - Ensure `out/` directory is generated during compilation
 - Check that webpack successfully bundles the webview
-
-### Marketplace publishing fails
-- Verify `VSCE_PAT` secret is set correctly
-- Check that the publisher name in `package.json` matches your Azure DevOps publisher
-- Ensure the PAT has "Marketplace (Manage)" scope
-- Verify the version in `package.json` hasn't been published before
 
 ### "Cannot find module" errors during compilation
 - Run `npm install` to ensure all dependencies are installed
