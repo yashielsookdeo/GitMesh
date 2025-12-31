@@ -1,0 +1,149 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--vscode-font-family);
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-editor-background);
+}
+
+.app {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+button {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 2px;
+  font-size: 13px;
+}
+
+button:hover:not(:disabled) {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.actions {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.action-group {
+  display: flex;
+  gap: 10px;
+}
+
+button.danger {
+  background-color: var(--vscode-errorForeground);
+}
+
+button.danger:hover:not(:disabled) {
+  background-color: var(--vscode-errorForeground);
+  opacity: 0.8;
+}
+
+.repo-list {
+  overflow-x: auto;
+}
+
+.repo-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--vscode-editor-background);
+}
+
+.repo-table th {
+  text-align: left;
+  padding: 12px;
+  background-color: var(--vscode-editorGroupHeader-tabsBackground);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.repo-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  font-size: 13px;
+}
+
+.repo-table tr:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.repo-name {
+  font-weight: 500;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.badge.clean {
+  background-color: var(--vscode-testing-iconPassed);
+  color: var(--vscode-editor-background);
+}
+
+.badge.dirty {
+  background-color: var(--vscode-editorWarning-foreground);
+  color: var(--vscode-editor-background);
+}
+
+.badge.untracked {
+  background-color: var(--vscode-editorInfo-foreground);
+  color: var(--vscode-editor-background);
+}
+
+.ahead {
+  color: var(--vscode-gitDecoration-addedResourceForeground);
+  margin-right: 8px;
+}
+
+.behind {
+  color: var(--vscode-gitDecoration-modifiedResourceForeground);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.empty-state p {
+  margin: 10px 0;
+}
+
+.empty-state .hint {
+  font-size: 12px;
+  opacity: 0.7;
+}
